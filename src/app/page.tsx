@@ -54,7 +54,6 @@ export default async function HomePage({
 
       roomsToDisplay = processedRooms.filter(room => {
         const isRoomBookedForRange = room.reservations.some(booking => {
-          // Ensure dates are proper Date objects for comparison
           const bookingCheckIn = new Date(booking.checkIn);
           const bookingCheckOut = new Date(booking.checkOut);
           return bookingCheckIn < checkOut && bookingCheckOut > checkIn;
@@ -66,19 +65,9 @@ export default async function HomePage({
     }
   } catch (error) {
     console.error("Failed to fetch rooms:", error);
-    fetchError = "Could not load room data. Please try again later.";
+    fetchError = "Could not load room data. Please try again later. This might be due to a database connection or configuration issue (e.g., missing libssl).";
     // roomsToDisplay will remain empty
   }
-
-
-  const handleDateChange = async (selectedRange: DateRange | undefined) => {
-    // This component is a Server Component, so client-side state updates for dateRange
-    // need to trigger a navigation to update searchParams, which then re-renders the page.
-    // For simplicity, DateRangeSearch might need to be adapted or this logic moved
-    // to a client component that wraps DateRangeSearch and uses router.push.
-    // For now, the search button in DateRangeSearch implies a full page reload/navigation.
-  };
-
 
   return (
     <div className="space-y-8">
@@ -93,14 +82,13 @@ export default async function HomePage({
 
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-4">Search by Dates</h2>
-        {/* DateRangeSearch's onDateChange will likely need to use router.push to update searchParams */}
-        <DateRangeSearch onDateChange={handleDateChange} initialDateRange={dateRange} />
+        <DateRangeSearch initialDateRange={dateRange} />
       </section>
       
       {fetchError && (
         <Alert variant="destructive" className="my-4">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Error Fetching Rooms</AlertTitle>
           <AlertDescription>{fetchError}</AlertDescription>
         </Alert>
       )}
@@ -112,7 +100,6 @@ export default async function HomePage({
         {roomsToDisplay.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {roomsToDisplay.map(room => (
-              // Ensure RoomCardProps matches the new Room type from Prisma
               <RoomCard key={room.id} room={room} selectedDateRange={dateRange} />
             ))}
           </div>
@@ -121,7 +108,7 @@ export default async function HomePage({
             <p className="text-center text-muted-foreground py-10 text-lg">
               {dateRange?.from && dateRange?.to 
                 ? "No rooms available for the selected dates. Please try a different date range."
-                : "No rooms to display."
+                : "No rooms to display at the moment."
               }
             </p>
           )

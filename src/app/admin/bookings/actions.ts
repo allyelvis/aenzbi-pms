@@ -27,24 +27,24 @@ export async function cancelBookingAction(formData: FormData): Promise<void> {
   const bookingId = parseInt(validatedFields.data.bookingId, 10);
 
   try {
-    // Check if booking exists before attempting to delete
     const bookingExists = await prisma.reservation.findUnique({
       where: { id: bookingId },
     });
 
     if (!bookingExists) {
-      redirectUrl += `?message=Failed+to+cancel+booking.+Booking+ID+${encodeURIComponent(bookingId)}+not+found.&status=error`;
+      redirectUrl += `?message=${encodeURIComponent(`Failed to cancel booking. Booking ID ${bookingId} not found.`)}&status=error`;
       redirect(redirectUrl);
     }
 
     await prisma.reservation.delete({
       where: { id: bookingId },
     });
-    revalidatePath('/admin/bookings');
-    redirectUrl += `?message=Booking+${encodeURIComponent(bookingId)}+cancelled+successfully.&status=success`;
+    revalidatePath('/admin/bookings'); // Revalidate the path to show updated list
+    redirectUrl += `?message=${encodeURIComponent(`Booking ${bookingId} cancelled successfully.`)}&status=success`;
   } catch (error) {
     console.error("Cancellation failed:", error);
-    redirectUrl += `?message=An+unexpected+error+occurred+during+cancellation.&status=error`;
+    // Check for specific Prisma error codes if needed, e.g., foreign key constraint
+    redirectUrl += `?message=${encodeURIComponent('An unexpected error occurred during cancellation.')}&status=error`;
   }
   redirect(redirectUrl);
 }

@@ -1,9 +1,11 @@
+
 "use client"
 
 import * as React from "react"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Calendar as CalendarIcon, Search } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,21 +17,27 @@ import {
 } from "@/components/ui/popover"
 
 interface DateRangeSearchProps {
-  onDateChange: (range: DateRange | undefined) => void;
   initialDateRange?: DateRange;
 }
 
-export default function DateRangeSearch({ onDateChange, initialDateRange }: DateRangeSearchProps) {
+export default function DateRangeSearch({ initialDateRange }: DateRangeSearchProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(initialDateRange);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const handleSelect = (selectedRange: DateRange | undefined) => {
     setDate(selectedRange);
-    // Optional: auto-apply on selection or wait for button click
-    // onDateChange(selectedRange); 
   }
 
   const handleSearch = () => {
-    onDateChange(date);
+    const params = new URLSearchParams();
+    if (date?.from) {
+      params.set('from', date.from.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    }
+    if (date?.to) {
+      params.set('to', date.to.toISOString().split('T')[0]); // Format as YYYY-MM-DD
+    }
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
@@ -73,7 +81,7 @@ export default function DateRangeSearch({ onDateChange, initialDateRange }: Date
           </PopoverContent>
         </Popover>
       </div>
-      <Button onClick={handleSearch} className="w-full sm:w-auto">
+      <Button onClick={handleSearch} className="w-full sm:w-auto" disabled={!date?.from || !date?.to}>
         <Search className="mr-2 h-4 w-4" /> Search Availability
       </Button>
     </div>

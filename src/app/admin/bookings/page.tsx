@@ -21,12 +21,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle2, AlertCircle, DollarSign, UserCircle2 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
-import type { Reservation, Guest, Room } from '@prisma/client';
+import type { Reservation as PrismaReservation, Guest as PrismaGuest, Room as PrismaRoom } from '@prisma/client';
 
 // Type for reservations with included guest and room, ensuring price is number
-interface PopulatedReservation extends Omit<Reservation, 'roomId' | 'guestId'> {
-  guest: Guest;
-  room: Omit<Room, 'price'> & { price: number };
+interface PopulatedReservation extends Omit<PrismaReservation, 'roomId' | 'guestId' | 'checkIn' | 'checkOut'> {
+  guest: PrismaGuest | null; // Guest can be null if not found, though ideally it shouldn't be
+  room: (Omit<PrismaRoom, 'price'> & { price: number }) | null; // Room can be null
+  checkIn: Date;
+  checkOut: Date;
 }
 
 
@@ -48,23 +50,27 @@ export default async function AdminBookingsPage({
         checkIn: 'asc',
       }
     });
-    // Process to ensure room.price is a number
+    
     currentBookings = reservationsFromDb.map(res => ({
       ...res,
-      room: {
+      checkIn: new Date(res.checkIn),
+      checkOut: new Date(res.checkOut),
+      guest: res.guest, // Guest can be null if relation is optional or not found
+      room: res.room ? {
         ...res.room,
-        price: Number(res.room.price),
-      },
+        price: Number(res.room.price), // Prisma Decimal to number
+      } : null,
     }));
+
   } catch (error) {
     console.error("Failed to fetch bookings:", error);
     fetchError = "Could not load booking data. Please try again later.";
   }
 
   const calculateTotalPrice = (booking: PopulatedReservation): number => {
-    if (!booking || !booking.room) return 0;
+    if (!booking.room || !booking.checkIn || !booking.checkOut) return 0;
 
-    const nights = differenceInCalendarDays(new Date(booking.checkOut), new Date(booking.checkIn));
+    const nights = differenceInCalendarDays(booking.checkOut, booking.checkIn);
     return nights > 0 ? nights * booking.room.price : 0;
   };
 
@@ -134,8 +140,8 @@ export default async function AdminBookingsPage({
                       </TableCell>
                       <TableCell>{booking.guest?.email || 'N/A'}</TableCell>
                       <TableCell>{booking.room ? `${booking.room.type} - ${booking.room.number}` : 'Unknown Room'}</TableCell>
-                      <TableCell>{format(new Date(booking.checkIn), 'PP')}</TableCell>
-                      <TableCell>{format(new Date(booking.checkOut), 'PP')}</TableCell>
+                      <TableCell>{format(booking.checkIn, 'PP')}</TableCell>
+                      <TableCell>{format(booking.checkOut, 'PP')}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
                            <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
