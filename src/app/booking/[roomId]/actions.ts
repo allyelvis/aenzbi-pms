@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { addBooking, rooms } from '@/lib/data'; // Assuming rooms can be fetched here for validation/info
+import { addBooking, rooms } from '@/lib/data';
 import type { Booking } from '@/types';
 import { parseISO, isValid } from 'date-fns';
 
@@ -26,7 +26,7 @@ export type BookingFormState = {
     general?: string[];
   };
   success?: boolean;
-  bookingDetails?: Booking | null;
+  bookingDetails?: Booking | null; // Booking type now includes guestId
 };
 
 export async function createBookingAction(
@@ -51,7 +51,6 @@ export async function createBookingAction(
 
   const { roomId, startDate, endDate, guestName, guestEmail } = validatedFields.data;
 
-  // Additional validation: Check if room exists
   const roomExists = rooms.some(r => r.id === roomId);
   if (!roomExists) {
     return {
@@ -61,7 +60,6 @@ export async function createBookingAction(
     };
   }
   
-  // Additional validation: Check if start date is before end date
   if (parseISO(startDate) >= parseISO(endDate)) {
     return {
       message: "Start date must be before end date.",
@@ -71,21 +69,19 @@ export async function createBookingAction(
   }
 
   try {
+    // addBooking now handles guest creation/linking and returns a Booking object with guestId
     const newBooking = addBooking({
       roomId,
-      startDate, // Pass as string, addBooking will parse
-      endDate,   // Pass as string, addBooking will parse
+      startDate,
+      endDate,
       guestName,
       guestEmail,
     });
     
-    // For now, we'll return a success state. Redirection can be handled client-side or with redirect() from next/navigation if appropriate.
-    // If redirecting, usually no need to return a complex state.
-    // redirect(`/booking/success?bookingId=${newBooking.id}`);
      return {
       message: "Booking successful!",
       success: true,
-      bookingDetails: newBooking,
+      bookingDetails: newBooking, // This Booking object contains guestId
     };
 
   } catch (error) {

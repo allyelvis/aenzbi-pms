@@ -1,5 +1,6 @@
 
-import { rooms, bookings } from '@/lib/data';
+import Link from 'next/link';
+import { rooms, bookings, guests } from '@/lib/data';
 import { cancelBookingAction } from './actions';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +19,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, AlertCircle, DollarSign } from 'lucide-react';
+import { CheckCircle2, AlertCircle, DollarSign, UserCircle2 } from 'lucide-react';
 import { format, differenceInCalendarDays } from 'date-fns';
+import type { Guest } from '@/types';
 
 export default async function AdminBookingsPage({
   searchParams,
@@ -28,9 +30,14 @@ export default async function AdminBookingsPage({
 }) {
   const currentBookings = bookings;
   const currentRooms = rooms;
+  const allGuests = guests;
 
   const getRoomName = (roomId: string) => {
     return currentRooms.find(r => r.id === roomId)?.name || 'Unknown Room';
+  };
+
+  const getGuestDetails = (guestId: string): Guest | undefined => {
+    return allGuests.find(g => g.id === guestId);
   };
 
   const calculateTotalPrice = (bookingId: string): number => {
@@ -91,29 +98,38 @@ export default async function AdminBookingsPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentBookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-medium">{booking.guestName}</TableCell>
-                      <TableCell>{booking.guestEmail}</TableCell>
-                      <TableCell>{getRoomName(booking.roomId)}</TableCell>
-                      <TableCell>{format(booking.startDate, 'PP')}</TableCell>
-                      <TableCell>{format(booking.endDate, 'PP')}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                           <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
-                           {calculateTotalPrice(booking.id).toFixed(2)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <form action={cancelBookingAction}>
-                          <input type="hidden" name="bookingId" value={booking.id} />
-                          <Button type="submit" variant="destructive" size="sm">
-                            Cancel Booking
-                          </Button>
-                        </form>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {currentBookings.map((booking) => {
+                    const guest = getGuestDetails(booking.guestId);
+                    return (
+                      <TableRow key={booking.id}>
+                        <TableCell className="font-medium">
+                          {guest ? (
+                            <Link href={`/admin/guests/${guest.id}`} className="hover:underline text-primary flex items-center gap-1">
+                              <UserCircle2 className="w-4 h-4" /> {guest.name}
+                            </Link>
+                          ) : 'Unknown Guest'}
+                        </TableCell>
+                        <TableCell>{guest?.email || 'N/A'}</TableCell>
+                        <TableCell>{getRoomName(booking.roomId)}</TableCell>
+                        <TableCell>{format(booking.startDate, 'PP')}</TableCell>
+                        <TableCell>{format(booking.endDate, 'PP')}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                             <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
+                             {calculateTotalPrice(booking.id).toFixed(2)}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <form action={cancelBookingAction}>
+                            <input type="hidden" name="bookingId" value={booking.id} />
+                            <Button type="submit" variant="destructive" size="sm">
+                              Cancel Booking
+                            </Button>
+                          </form>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

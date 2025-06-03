@@ -1,5 +1,5 @@
 
-import type { Room, Booking, RoomStatus, FoodBeverageOutlet } from '@/types';
+import type { Room, Booking, RoomStatus, FoodBeverageOutlet, Guest } from '@/types';
 import { addDays, subDays, parseISO } from 'date-fns';
 
 export let rooms: Room[] = [
@@ -58,55 +58,97 @@ export let rooms: Room[] = [
 ];
 
 const today = new Date();
-// Ensure existing bookings use Date objects or are parsed correctly if they were strings
+
+export let guests: Guest[] = [
+  { 
+    id: 'guest1', 
+    name: 'Alice Wonderland', 
+    email: 'alice@example.com', 
+    phone: '555-0101',
+    preferences: ['High floor', 'Hypoallergenic pillows'],
+    loyaltyStatus: 'Gold',
+    notes: 'Celebrated anniversary here last year.'
+  },
+  { 
+    id: 'guest2', 
+    name: 'Bob The Builder', 
+    email: 'bob@example.com', 
+    phone: '555-0102',
+    loyaltyStatus: 'Silver',
+    preferences: ['Quiet room', 'Early check-in requested']
+  },
+  { 
+    id: 'guest3', 
+    name: 'Charlie Brown', 
+    email: 'charlie@example.com', 
+    phone: '555-0103',
+    notes: 'First time guest.'
+  },
+  { 
+    id: 'guest4', 
+    name: 'Diana Prince', 
+    email: 'diana@example.com',
+    loyaltyStatus: 'Platinum',
+    preferences: ['Ocean view if possible', 'Likes extra towels']
+  },
+  { 
+    id: 'guest5', 
+    name: 'Edward Elric', 
+    email: 'edward@example.com',
+    phone: '555-0105',
+    preferences: ['Prefers firm mattress']
+  },
+  {
+    id: 'guest6',
+    name: 'Fiona Gallagher',
+    email: 'fiona@example.com',
+    loyaltyStatus: 'Silver',
+    notes: 'Traveling with family.'
+  }
+];
+
 export let bookings: Booking[] = [
   {
     id: 'booking1',
     roomId: 'deluxe-king',
+    guestId: 'guest1',
     startDate: subDays(today, 5),
     endDate: subDays(today, 2),
-    guestName: 'Alice Wonderland',
-    guestEmail: 'alice@example.com',
   },
   {
     id: 'booking2',
     roomId: 'family-room',
+    guestId: 'guest2',
     startDate: today,
     endDate: addDays(today, 3),
-    guestName: 'Bob The Builder',
-    guestEmail: 'bob@example.com',
   },
   {
     id: 'booking3',
     roomId: 'standard-queen',
+    guestId: 'guest3',
     startDate: addDays(today, 1),
     endDate: addDays(today, 4),
-    guestName: 'Charlie Brown',
-    guestEmail: 'charlie@example.com',
   },
   {
     id: 'booking4',
     roomId: 'deluxe-king',
+    guestId: 'guest4',
     startDate: addDays(today, 7),
     endDate: addDays(today, 10),
-    guestName: 'Diana Prince',
-    guestEmail: 'diana@example.com',
   },
   {
     id: 'booking5',
     roomId: 'executive-studio',
+    guestId: 'guest5',
     startDate: addDays(today, 2),
     endDate: addDays(today, 5),
-    guestName: 'Edward Elric',
-    guestEmail: 'edward@example.com',
   },
    {
     id: 'booking6',
     roomId: 'deluxe-king',
+    guestId: 'guest6',
     startDate: addDays(today, 1),
     endDate: addDays(today, 3),
-    guestName: 'Fiona Gallagher',
-    guestEmail: 'fiona@example.com',
   },
 ].map(booking => ({
     ...booking,
@@ -115,37 +157,56 @@ export let bookings: Booking[] = [
 }));
 
 
-// Function to add a new booking
-// Expects string dates for easier passing from forms/server actions
 export function addBooking(newBookingData: {
   roomId: string;
   startDate: string;
   endDate: string;
   guestName: string;
-  guestEmail: string; // guestEmail is now required
+  guestEmail: string;
 }): Booking {
+  let guest = guests.find(g => g.email.toLowerCase() === newBookingData.guestEmail.toLowerCase());
+  let guestIdToUse: string;
+
+  if (!guest) {
+    guestIdToUse = `guest${guests.length + 1}_${Date.now()}`;
+    const newGuest: Guest = {
+      id: guestIdToUse,
+      name: newBookingData.guestName,
+      email: newBookingData.guestEmail,
+      // preferences: [], // Initialize with empty preferences
+      // loyaltyStatus: 'New', // Default loyalty status
+    };
+    guests.push(newGuest);
+  } else {
+    guestIdToUse = guest.id;
+    // Optionally update guest name if it's different, though this might be better handled in a profile update flow
+    if (guest.name !== newBookingData.guestName) {
+      // console.log(`Guest email ${newBookingData.guestEmail} found, but name differs. Keeping original name: ${guest.name}`);
+      // For simplicity, we're not updating guest details here, just using existing guest.
+    }
+  }
+
   const newBooking: Booking = {
-    ...newBookingData,
-    id: `booking${bookings.length + 1}_${Date.now()}`, // Simple unique ID
-    startDate: parseISO(newBookingData.startDate), // Convert string to Date
-    endDate: parseISO(newBookingData.endDate),     // Convert string to Date
+    id: `booking${bookings.length + 1}_${Date.now()}`,
+    roomId: newBookingData.roomId,
+    guestId: guestIdToUse,
+    startDate: parseISO(newBookingData.startDate),
+    endDate: parseISO(newBookingData.endDate),
   };
   bookings.push(newBooking);
   return newBooking;
 }
 
-// Function to remove a booking by ID
 export function removeBooking(bookingId: string): boolean {
   const initialLength = bookings.length;
   bookings = bookings.filter(b => b.id !== bookingId);
   return bookings.length < initialLength;
 }
 
-// Function to update a room's status
 export function updateRoomStatus(roomId: string, newStatus: RoomStatus): boolean {
   const roomIndex = rooms.findIndex(r => r.id === roomId);
   if (roomIndex === -1) {
-    return false; // Room not found
+    return false;
   }
   rooms[roomIndex].status = newStatus;
   return true;

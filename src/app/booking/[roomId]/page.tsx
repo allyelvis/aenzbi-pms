@@ -8,8 +8,8 @@ import Link from 'next/link';
 import { useFormState, useFormStatus } from 'react-dom';
 import { format, parseISO, isValid as isValidDate, differenceInCalendarDays } from 'date-fns';
 
-import type { Room, Booking } from '@/types';
-import { rooms } from '@/lib/data'; // For fetching room details
+import type { Room, Booking, Guest } from '@/types';
+import { rooms, guests as allGuests } from '@/lib/data'; // Import guests
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ export default function BookingPage() {
   const router = useRouter();
 
   const [room, setRoom] = useState<Room | null>(null);
+  const [currentGuest, setCurrentGuest] = useState<Guest | null>(null); // For success screen
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,18 +73,19 @@ export default function BookingPage() {
     setNumberOfNights(nights);
     setTotalPrice(nights * foundRoom.pricePerNight);
 
-    setError(null); // Clear previous errors
+    setError(null); 
 
-  }, [roomId, fromDateStr, toDateStr, router]);
+  }, [roomId, fromDateStr, toDateStr]);
 
   const initialState: BookingFormState = { message: null, errors: {}, success: false };
   const [formState, formAction] = useFormState(createBookingAction, initialState);
 
   useEffect(() => {
     if (formState?.success && formState.bookingDetails) {
-      // Success state is handled by the JSX below
+      const guestForBooking = allGuests.find(g => g.id === formState.bookingDetails?.guestId);
+      setCurrentGuest(guestForBooking || null);
     }
-  }, [formState, router]);
+  }, [formState]);
 
 
   if (error) {
@@ -106,7 +108,7 @@ export default function BookingPage() {
     );
   }
 
-  if (formState?.success && formState.bookingDetails) {
+  if (formState?.success && formState.bookingDetails && currentGuest) {
     const confirmedBooking = formState.bookingDetails;
     const confirmedRoom = rooms.find(r => r.id === confirmedBooking.roomId);
     const confirmedNights = differenceInCalendarDays(confirmedBooking.endDate, confirmedBooking.startDate);
@@ -121,8 +123,8 @@ export default function BookingPage() {
             <CardDescription>Your reservation for {confirmedRoom?.name} has been successfully made.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-left">
-            <p><strong className="text-primary">Guest:</strong> {confirmedBooking.guestName}</p>
-            <p><strong className="text-primary">Email:</strong> {confirmedBooking.guestEmail}</p>
+            <p><strong className="text-primary">Guest:</strong> {currentGuest.name}</p>
+            <p><strong className="text-primary">Email:</strong> {currentGuest.email}</p>
             <p><strong className="text-primary">Room:</strong> {confirmedRoom?.name}</p>
             <Separator />
             <p><strong className="text-primary">Check-in:</strong> {format(confirmedBooking.startDate, "PPP")}</p>
@@ -130,7 +132,7 @@ export default function BookingPage() {
             <p><strong className="text-primary">Number of nights:</strong> {confirmedNights}</p>
             <Separator />
             <p className="text-lg"><strong className="text-primary">Total Price:</strong> ${confirmedTotalPrice.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground pt-2 text-center">A confirmation email has been sent to {confirmedBooking.guestEmail}. (Email simulation)</p>
+            <p className="text-sm text-muted-foreground pt-2 text-center">A confirmation email has been sent to {currentGuest.email}. (Email simulation)</p>
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button asChild>

@@ -25,16 +25,25 @@ export type Room = {
   capacity: number;
   amenities: string[];
   size: string;
-  status: RoomStatus; // Added status field
+  status: RoomStatus;
+};
+
+export type Guest = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  preferences?: string[]; // e.g., ["High floor", "Extra pillows"]
+  loyaltyStatus?: string; // e.g., "Gold", "Platinum"
+  notes?: string;
 };
 
 export type Booking = {
   id: string;
   roomId: string;
+  guestId: string; // Changed from guestName and guestEmail
   startDate: Date;
   endDate: Date;
-  guestName: string;
-  guestEmail: string;
 };
 
 export type FoodBeverageOutlet = {
@@ -48,4 +57,3 @@ export type FoodBeverageOutlet = {
   dressCode?: string;
   location: string;
 };
-
