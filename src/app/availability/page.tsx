@@ -1,3 +1,4 @@
+
 import AvailabilityCalendarDisplay from '@/components/AvailabilityCalendarDisplay';
 import { rooms, bookings } from '@/lib/data'; // Assuming direct import for server component
 
@@ -23,3 +24,4 @@ export default async function AvailabilityPage() {
     </div>
   );
 }
+
