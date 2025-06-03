@@ -3,32 +3,33 @@
 
 import React, { useMemo } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import type { Room, Booking } from '@/types';
-import { isSameDay, addDays, eachDayOfInterval, parseISO } from 'date-fns';
+import type { Room as PrismaRoom, Reservation as PrismaReservation } from '@prisma/client'; // Use Prisma types
+import { addDays, eachDayOfInterval } from 'date-fns';
 import type { DayModifiers } from 'react-day-picker';
 
-interface AvailabilityCalendarDisplayProps {
-  rooms: Room[];
-  bookings: Booking[];
+// Interface for props, ensuring Room.price is number and Reservation dates are Date
+interface RoomForCalendar extends Omit<PrismaRoom, 'price' | 'id' | 'createdAt' | 'updatedAt'> {
+  id: number;
+  price: number;
+}
+interface ReservationForCalendar extends Omit<PrismaReservation, 'checkIn' | 'checkOut' | 'id' | 'guestId' | 'roomId' | 'createdAt' | 'updatedAt'> {
+  id: number;
+  guestId: number;
+  roomId: number;
+  checkIn: Date;
+  checkOut: Date;
 }
 
-// Helper to parse booking dates if they are not already Date objects
-const parseBookings = (bookings: Booking[]): Booking[] => 
-  bookings.map(booking => ({
-    ...booking,
-    startDate: typeof booking.startDate === 'string' ? parseISO(booking.startDate) : booking.startDate,
-    endDate: typeof booking.endDate === 'string' ? parseISO(booking.endDate) : booking.endDate,
-  }));
-
+interface AvailabilityCalendarDisplayProps {
+  rooms: RoomForCalendar[];
+  reservations: ReservationForCalendar[];
+}
 
 export default function AvailabilityCalendarDisplay({ 
-  rooms: rawRooms, 
-  bookings: rawBookings 
+  rooms, 
+  reservations 
 }: AvailabilityCalendarDisplayProps) {
   
-  const rooms = useMemo(() => rawRooms, [rawRooms]);
-  const bookings = useMemo(() => parseBookings(rawBookings), [rawBookings]);
-
   const totalRooms = rooms.length;
 
   const dailyAvailabilityModifiers = useMemo(() => {
@@ -38,20 +39,21 @@ export default function AvailabilityCalendarDisplay({
       fullyBooked: [],
     };
 
-    // Consider a reasonable range for display, e.g., current month and next 2 months
     const today = new Date();
-    const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endDate = addDays(new Date(today.getFullYear(), today.getMonth() + 3, 0), -1); // End of 2 months from now
+    const viewStartDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    // Calculate end date for 2 full months ahead (e.g., if today is Jan, show Jan, Feb, Mar)
+    const viewEndDate = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+
 
     if (totalRooms === 0) return modifiers;
 
-    eachDayOfInterval({ start: startDate, end: endDate }).forEach(day => {
+    eachDayOfInterval({ start: viewStartDate, end: viewEndDate }).forEach(day => {
       let bookedRoomsCount = 0;
       rooms.forEach(room => {
-        const isRoomBookedOnDay = bookings.some(booking =>
+        const isRoomBookedOnDay = reservations.some(booking =>
           booking.roomId === room.id &&
-          day >= booking.startDate &&
-          day < booking.endDate // endDate is exclusive
+          day >= booking.checkIn && // Use checkIn
+          day < booking.checkOut   // Use checkOut (exclusive)
         );
         if (isRoomBookedOnDay) {
           bookedRoomsCount++;
@@ -68,20 +70,20 @@ export default function AvailabilityCalendarDisplay({
     });
     
     return modifiers;
-  }, [rooms, bookings, totalRooms]);
+  }, [rooms, reservations, totalRooms]);
 
   return (
     <div className="p-4 border rounded-lg shadow-sm bg-card">
       <Calendar
-        mode="multiple" // "multiple" or "single" to enable selection styling if needed, but effectively read-only
-        selected={[]} // No actual selection, just using modifiers
+        mode="multiple"
+        selected={[]}
         modifiers={dailyAvailabilityModifiers}
         modifiersClassNames={{
           fullyAvailable: 'day-fully-available',
           partiallyAvailable: 'day-partially-available',
           fullyBooked: 'day-fully-booked',
         }}
-        numberOfMonths={2}
+        numberOfMonths={2} // Display 2 months
         className="w-full"
         disabled={(day) => day < new Date(new Date().setHours(0,0,0,0))} // Disable past dates
       />
@@ -102,4 +104,3 @@ export default function AvailabilityCalendarDisplay({
     </div>
   );
 }
-

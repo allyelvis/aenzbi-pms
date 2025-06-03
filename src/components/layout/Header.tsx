@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Building2, BedDouble, CalendarDays, UserCog, Utensils, Users } from 'lucide-react';
+import { Building2, BedDouble, CalendarDays, UserCog, Users } from 'lucide-react'; // Utensils removed
 import { Button } from '@/components/ui/button';
 
 export default function Header() {
@@ -20,11 +20,13 @@ export default function Header() {
               <CalendarDays className="w-4 h-4 sm:hidden md:inline-block" /> Availability
             </Link>
           </Button>
+           {/* F&B Outlets link removed as feature is temporarily unavailable with new schema
            <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3">
             <Link href="/food-and-beverage" className="flex items-center gap-1">
               <Utensils className="w-4 h-4 sm:hidden md:inline-block" /> F&B Outlets
             </Link>
           </Button>
+          */}
           <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3">
             <Link href="/admin/bookings" className="flex items-center gap-1">
                <UserCog className="w-4 h-4 sm:hidden md:inline-block" /> Manage Bookings
