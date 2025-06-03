@@ -122,7 +122,13 @@ export function addBooking(newBookingData: {
     endDate: parseISO(newBookingData.endDate),     // Convert string to Date
   };
   bookings.push(newBooking);
-  // console.log('Booking added:', newBooking); // Good for server-side logging
-  // console.log('All bookings now:', bookings.length);
   return newBooking;
 }
+
+// Function to remove a booking by ID
+export function removeBooking(bookingId: string): boolean {
+  const initialLength = bookings.length;
+  bookings = bookings.filter(b => b.id !== bookingId);
+  return bookings.length < initialLength;
+}
+

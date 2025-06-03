@@ -11,16 +11,18 @@ export default function Header() {
           <Building2 size={28} />
           <h1 className="text-2xl font-headline font-bold">Aenzbi PMS</h1>
         </Link>
-        <nav className="flex items-center gap-4">
-          <Button variant="ghost" asChild className="hover:bg-white/10">
-            <Link href="/" className="text-sm font-medium">Home</Link>
+        <nav className="flex items-center gap-2 sm:gap-4">
+          <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm">
+            <Link href="/">Home</Link>
           </Button>
-          <Button variant="ghost" asChild className="hover:bg-white/10">
-            <Link href="/availability" className="text-sm font-medium">Availability</Link>
+          <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm">
+            <Link href="/availability">Availability</Link>
+          </Button>
+          <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm">
+            <Link href="/admin/bookings">Manage Bookings</Link>
           </Button>
         </nav>
       </div>
     </header>
   );
 }
-
