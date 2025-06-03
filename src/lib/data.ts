@@ -1,8 +1,8 @@
 
-import type { Room, Booking } from '@/types';
+import type { Room, Booking, RoomStatus } from '@/types';
 import { addDays, subDays, parseISO } from 'date-fns';
 
-export const rooms: Room[] = [
+export let rooms: Room[] = [
   {
     id: 'deluxe-king',
     name: 'Deluxe King Suite',
@@ -14,6 +14,7 @@ export const rooms: Room[] = [
     capacity: 2,
     amenities: ['Free WiFi', 'Air Conditioning', 'Mini Bar', 'HD TV', 'Work Desk', 'Rain Shower', 'City View', 'Separate Living Area'],
     size: '45 sqm',
+    status: 'Vacant Clean',
   },
   {
     id: 'family-room',
@@ -26,6 +27,7 @@ export const rooms: Room[] = [
     capacity: 4,
     amenities: ['Free WiFi', 'Air Conditioning', '2 HD TVs', 'Coffee Maker', 'Adjoining Rooms', 'Kids Welcome Pack'],
     size: '60 sqm',
+    status: 'Occupied',
   },
   {
     id: 'standard-queen',
@@ -38,6 +40,7 @@ export const rooms: Room[] = [
     capacity: 2,
     amenities: ['Free WiFi', 'Air Conditioning', 'HD TV', 'Hair Dryer', 'Desk'],
     size: '25 sqm',
+    status: 'Vacant Dirty',
   },
   {
     id: 'executive-studio',
@@ -50,6 +53,7 @@ export const rooms: Room[] = [
     capacity: 2,
     amenities: ['High-Speed WiFi', 'Air Conditioning', 'Smart TV', 'Nespresso Machine', 'Ergonomic Chair', 'Executive Lounge Access'],
     size: '35 sqm',
+    status: 'Maintenance',
   },
 ];
 
@@ -112,7 +116,6 @@ export function addBooking(newBookingData: {
   startDate: string; 
   endDate: string; 
   guestName: string;
-  // Add other fields like email if your form collects them
   guestEmail?: string; 
 }): Booking {
   const newBooking: Booking = {
@@ -132,3 +135,12 @@ export function removeBooking(bookingId: string): boolean {
   return bookings.length < initialLength;
 }
 
+// Function to update a room's status
+export function updateRoomStatus(roomId: string, newStatus: RoomStatus): boolean {
+  const roomIndex = rooms.findIndex(r => r.id === roomId);
+  if (roomIndex === -1) {
+    return false; // Room not found
+  }
+  rooms[roomIndex].status = newStatus;
+  return true;
+}
