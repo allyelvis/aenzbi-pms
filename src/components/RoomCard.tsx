@@ -1,4 +1,6 @@
+
 import Image from 'next/image';
+import Link from 'next/link';
 import type { Room } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,10 +43,10 @@ export default function RoomCard({ room }: RoomCardProps) {
         </div>
       </CardContent>
       <CardFooter className="p-6 pt-0">
-        {/* Future: Link to a room details page or open a modal */}
-        {/* For now, this button is illustrative. Search is on the page level. */}
-        <Button variant="outline" className="w-full group" disabled>
-          View Details <ArrowRight className="ml-2 h-4 w-4_disabled_transition-transform group-hover:translate-x-1" />
+        <Button variant="outline" className="w-full group" asChild>
+          <Link href={`/rooms/${room.id}`}>
+            View Details <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </Button>
       </CardFooter>
     </Card>
