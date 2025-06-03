@@ -66,6 +66,7 @@ export let bookings: Booking[] = [
     startDate: subDays(today, 5),
     endDate: subDays(today, 2),
     guestName: 'Alice Wonderland',
+    guestEmail: 'alice@example.com',
   },
   {
     id: 'booking2',
@@ -73,6 +74,7 @@ export let bookings: Booking[] = [
     startDate: today,
     endDate: addDays(today, 3),
     guestName: 'Bob The Builder',
+    guestEmail: 'bob@example.com',
   },
   {
     id: 'booking3',
@@ -80,6 +82,7 @@ export let bookings: Booking[] = [
     startDate: addDays(today, 1),
     endDate: addDays(today, 4),
     guestName: 'Charlie Brown',
+    guestEmail: 'charlie@example.com',
   },
   {
     id: 'booking4',
@@ -87,6 +90,7 @@ export let bookings: Booking[] = [
     startDate: addDays(today, 7),
     endDate: addDays(today, 10),
     guestName: 'Diana Prince',
+    guestEmail: 'diana@example.com',
   },
   {
     id: 'booking5',
@@ -94,13 +98,15 @@ export let bookings: Booking[] = [
     startDate: addDays(today, 2),
     endDate: addDays(today, 5),
     guestName: 'Edward Elric',
+    guestEmail: 'edward@example.com',
   },
    {
     id: 'booking6',
     roomId: 'deluxe-king',
-    startDate: addDays(today, 1), 
+    startDate: addDays(today, 1),
     endDate: addDays(today, 3),
     guestName: 'Fiona Gallagher',
+    guestEmail: 'fiona@example.com',
   },
 ].map(booking => ({
     ...booking,
@@ -111,12 +117,12 @@ export let bookings: Booking[] = [
 
 // Function to add a new booking
 // Expects string dates for easier passing from forms/server actions
-export function addBooking(newBookingData: { 
-  roomId: string; 
-  startDate: string; 
-  endDate: string; 
+export function addBooking(newBookingData: {
+  roomId: string;
+  startDate: string;
+  endDate: string;
   guestName: string;
-  guestEmail?: string; 
+  guestEmail: string; // guestEmail is now required
 }): Booking {
   const newBooking: Booking = {
     ...newBookingData,

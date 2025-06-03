@@ -6,9 +6,9 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useFormState, useFormStatus } from 'react-dom';
-import { format, parseISO, isValid as isValidDate } from 'date-fns';
+import { format, parseISO, isValid as isValidDate, differenceInCalendarDays } from 'date-fns';
 
-import type { Room } from '@/types';
+import type { Room, Booking } from '@/types';
 import { rooms } from '@/lib/data'; // For fetching room details
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { createBookingAction, type BookingFormState } from './actions';
-import { CalendarDays, User, Mail, BedDouble, DollarSign, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { CalendarDays, User, Mail, BedDouble, DollarSign, AlertCircle, CheckCircle2, Users, Home, Clock } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -36,6 +38,8 @@ export default function BookingPage() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [numberOfNights, setNumberOfNights] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   const roomId = typeof params.roomId === 'string' ? params.roomId : '';
   const fromDateStr = searchParams.get('from');
@@ -44,14 +48,12 @@ export default function BookingPage() {
   useEffect(() => {
     if (!roomId || !fromDateStr || !toDateStr) {
       setError("Missing booking information. Please select a room and dates.");
-      // router.push('/'); // Optionally redirect
       return;
     }
 
     const foundRoom = rooms.find(r => r.id === roomId);
     if (!foundRoom) {
       setError("Room not found.");
-      // router.push('/'); // Optionally redirect
       return;
     }
     setRoom(foundRoom);
@@ -61,23 +63,25 @@ export default function BookingPage() {
 
     if (!isValidDate(parsedFrom) || !isValidDate(parsedTo) || parsedFrom >= parsedTo) {
       setError("Invalid date range selected.");
-      // router.push('/'); // Optionally redirect
       return;
     }
     setFromDate(parsedFrom);
     setToDate(parsedTo);
+
+    const nights = differenceInCalendarDays(parsedTo, parsedFrom);
+    setNumberOfNights(nights);
+    setTotalPrice(nights * foundRoom.pricePerNight);
+
     setError(null); // Clear previous errors
 
   }, [roomId, fromDateStr, toDateStr, router]);
 
   const initialState: BookingFormState = { message: null, errors: {}, success: false };
   const [formState, formAction] = useFormState(createBookingAction, initialState);
-  
+
   useEffect(() => {
     if (formState?.success && formState.bookingDetails) {
-      // Handle successful booking, e.g., show success message or redirect
-      // For now, we show an alert. A redirect to a success page is common.
-      // router.push(`/booking/success?bookingId=${formState.bookingDetails.id}`);
+      // Success state is handled by the JSX below
     }
   }, [formState, router]);
 
@@ -101,22 +105,32 @@ export default function BookingPage() {
       </div>
     );
   }
-  
+
   if (formState?.success && formState.bookingDetails) {
+    const confirmedBooking = formState.bookingDetails;
+    const confirmedRoom = rooms.find(r => r.id === confirmedBooking.roomId);
+    const confirmedNights = differenceInCalendarDays(confirmedBooking.endDate, confirmedBooking.startDate);
+    const confirmedTotalPrice = confirmedRoom ? confirmedNights * confirmedRoom.pricePerNight : 0;
+
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center">
-        <Card className="w-full max-w-2xl text-center">
+        <Card className="w-full max-w-2xl text-center shadow-xl">
           <CardHeader>
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <CardTitle className="text-3xl font-headline text-green-600">Booking Confirmed!</CardTitle>
-            <CardDescription>Your reservation for {room.name} has been successfully made.</CardDescription>
+            <CardTitle className="text-3xl font-headline text-primary">Booking Confirmed!</CardTitle>
+            <CardDescription>Your reservation for {confirmedRoom?.name} has been successfully made.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p><strong>Guest:</strong> {formState.bookingDetails.guestName}</p>
-            <p><strong>Room:</strong> {room.name}</p>
-            <p><strong>Check-in:</strong> {format(formState.bookingDetails.startDate, "LLL dd, yyyy")}</p>
-            <p><strong>Check-out:</strong> {format(formState.bookingDetails.endDate, "LLL dd, yyyy")}</p>
-            <p className="text-sm text-muted-foreground">A confirmation email has been sent to { (formState.bookingDetails as any).guestEmail || 'your email'}. (Email simulation)</p>
+          <CardContent className="space-y-3 text-left">
+            <p><strong className="text-primary">Guest:</strong> {confirmedBooking.guestName}</p>
+            <p><strong className="text-primary">Email:</strong> {confirmedBooking.guestEmail}</p>
+            <p><strong className="text-primary">Room:</strong> {confirmedRoom?.name}</p>
+            <Separator />
+            <p><strong className="text-primary">Check-in:</strong> {format(confirmedBooking.startDate, "PPP")}</p>
+            <p><strong className="text-primary">Check-out:</strong> {format(confirmedBooking.endDate, "PPP")}</p>
+            <p><strong className="text-primary">Number of nights:</strong> {confirmedNights}</p>
+            <Separator />
+            <p className="text-lg"><strong className="text-primary">Total Price:</strong> ${confirmedTotalPrice.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground pt-2 text-center">A confirmation email has been sent to {confirmedBooking.guestEmail}. (Email simulation)</p>
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button asChild>
@@ -132,12 +146,12 @@ export default function BookingPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary mb-8 text-center">Confirm Your Booking</h1>
-      
+
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">{room.name}</CardTitle>
-            <div className="relative w-full h-64 rounded-md overflow-hidden mt-2">
+             <div className="relative w-full h-60 rounded-md overflow-hidden mt-2 shadow-md">
               <Image
                 src={room.photos[0]}
                 alt={`Image of ${room.name}`}
@@ -147,18 +161,32 @@ export default function BookingPage() {
               />
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CalendarDays className="w-5 h-5 text-primary" />
-              <span>Dates: {format(fromDate, "LLL dd, yyyy")} - {format(toDate, "LLL dd, yyyy")}</span>
-            </div>
+          <CardContent className="space-y-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <BedDouble className="w-5 h-5 text-primary" />
-              <span>{room.beds}, for {room.capacity} guest(s)</span>
+              <span>{room.beds}</span>
+            </div>
+             <div className="flex items-center gap-2 text-muted-foreground">
+              <Users className="w-5 h-5 text-primary" />
+              <span>{room.capacity} Guest(s)</span>
+            </div>
+            <Separator />
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <CalendarDays className="w-5 h-5 text-primary" />
+              <span>{format(fromDate, "PPP")} - {format(toDate, "PPP")}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="w-5 h-5 text-primary" />
+              <span>{numberOfNights} Night(s)</span>
+            </div>
+            <Separator />
+            <div className="flex items-center gap-2 text-muted-foreground">
               <DollarSign className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-lg text-foreground">${room.pricePerNight} / night</span>
+              <span className="font-semibold text-lg text-foreground">${room.pricePerNight.toFixed(2)} / night</span>
+            </div>
+             <div className="flex items-center gap-2">
+              <DollarSign className="w-6 h-6 text-primary" />
+              <span className="font-bold text-xl text-foreground">Total: ${totalPrice.toFixed(2)}</span>
             </div>
             <p className="text-sm text-muted-foreground pt-2">{room.description}</p>
           </CardContent>
@@ -196,7 +224,7 @@ export default function BookingPage() {
                   <p className="text-sm text-red-500">{formState.errors.guestEmail.join(', ')}</p>
                 )}
               </div>
-              
+
               {formState?.message && !formState.success && (
                  <Alert variant="destructive">
                    <AlertCircle className="h-4 w-4" />
@@ -211,8 +239,6 @@ export default function BookingPage() {
                    <AlertDescription>{formState.errors.general.join(', ')}</AlertDescription>
                  </Alert>
               )}
-
-
               <SubmitButton />
             </form>
           </CardContent>

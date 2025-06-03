@@ -18,20 +18,30 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { CheckCircle2, AlertCircle, DollarSign } from 'lucide-react';
+import { format, differenceInCalendarDays } from 'date-fns';
 
 export default async function AdminBookingsPage({
   searchParams,
 }: {
   searchParams?: { message?: string; status?: string };
 }) {
-  // In a real app, you'd fetch this data, possibly with pagination
-  const currentBookings = bookings; 
+  const currentBookings = bookings;
   const currentRooms = rooms;
 
   const getRoomName = (roomId: string) => {
     return currentRooms.find(r => r.id === roomId)?.name || 'Unknown Room';
+  };
+
+  const calculateTotalPrice = (bookingId: string): number => {
+    const booking = currentBookings.find(b => b.id === bookingId);
+    if (!booking) return 0;
+
+    const room = currentRooms.find(r => r.id === booking.roomId);
+    if (!room) return 0;
+
+    const nights = differenceInCalendarDays(booking.endDate, booking.startDate);
+    return nights > 0 ? nights * room.pricePerNight : 0;
   };
 
   return (
@@ -46,8 +56,8 @@ export default async function AdminBookingsPage({
       </section>
 
       {searchParams?.message && (
-        <Alert 
-          variant={searchParams.status === 'success' ? 'default' : 'destructive'} 
+        <Alert
+          variant={searchParams.status === 'success' ? 'default' : 'destructive'}
           className="my-6 max-w-2xl mx-auto"
         >
           {searchParams.status === 'success' ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
@@ -55,12 +65,12 @@ export default async function AdminBookingsPage({
           <AlertDescription>{decodeURIComponent(searchParams.message)}</AlertDescription>
         </Alert>
       )}
-      
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Current Bookings</CardTitle>
           <CardDescription>
-            {currentBookings.length > 0 
+            {currentBookings.length > 0
               ? `A total of ${currentBookings.length} booking(s) found.`
               : "There are no current bookings in the system."}
           </CardDescription>
@@ -72,9 +82,11 @@ export default async function AdminBookingsPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Guest Name</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Room</TableHead>
                     <TableHead>Check-in</TableHead>
                     <TableHead>Check-out</TableHead>
+                    <TableHead>Total Price</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -82,9 +94,16 @@ export default async function AdminBookingsPage({
                   {currentBookings.map((booking) => (
                     <TableRow key={booking.id}>
                       <TableCell className="font-medium">{booking.guestName}</TableCell>
+                      <TableCell>{booking.guestEmail}</TableCell>
                       <TableCell>{getRoomName(booking.roomId)}</TableCell>
-                      <TableCell>{format(booking.startDate, 'PP')}</TableCell> 
+                      <TableCell>{format(booking.startDate, 'PP')}</TableCell>
                       <TableCell>{format(booking.endDate, 'PP')}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                           <DollarSign className="w-4 h-4 mr-1 text-muted-foreground" />
+                           {calculateTotalPrice(booking.id).toFixed(2)}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <form action={cancelBookingAction}>
                           <input type="hidden" name="bookingId" value={booking.id} />
