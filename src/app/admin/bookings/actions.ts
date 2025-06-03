@@ -1,17 +1,15 @@
 
 'use server';
 
-import { removeBooking } from '@/lib/data';
+import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 const CancelBookingSchema = z.object({
-  bookingId: z.string().min(1, "Booking ID is required."),
+  bookingId: z.string().min(1, "Booking ID is required.").refine(val => !isNaN(parseInt(val, 10)), { message: "Booking ID must be a number." }),
 });
 
-// This action does not use useFormState, so it doesn't return a state object.
-// It redirects with query parameters for feedback.
 export async function cancelBookingAction(formData: FormData): Promise<void> {
   const validatedFields = CancelBookingSchema.safeParse({
     bookingId: formData.get('bookingId'),
@@ -26,16 +24,24 @@ export async function cancelBookingAction(formData: FormData): Promise<void> {
     redirect(redirectUrl);
   }
 
-  const { bookingId } = validatedFields.data;
+  const bookingId = parseInt(validatedFields.data.bookingId, 10);
 
   try {
-    const success = removeBooking(bookingId);
-    if (success) {
-      revalidatePath('/admin/bookings');
-      redirectUrl += `?message=Booking+${encodeURIComponent(bookingId)}+cancelled+successfully.&status=success`;
-    } else {
-      redirectUrl += `?message=Failed+to+cancel+booking+${encodeURIComponent(bookingId)}.+Booking+not+found.&status=error`;
+    // Check if booking exists before attempting to delete
+    const bookingExists = await prisma.reservation.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!bookingExists) {
+      redirectUrl += `?message=Failed+to+cancel+booking.+Booking+ID+${encodeURIComponent(bookingId)}+not+found.&status=error`;
+      redirect(redirectUrl);
     }
+
+    await prisma.reservation.delete({
+      where: { id: bookingId },
+    });
+    revalidatePath('/admin/bookings');
+    redirectUrl += `?message=Booking+${encodeURIComponent(bookingId)}+cancelled+successfully.&status=success`;
   } catch (error) {
     console.error("Cancellation failed:", error);
     redirectUrl += `?message=An+unexpected+error+occurred+during+cancellation.&status=error`;
