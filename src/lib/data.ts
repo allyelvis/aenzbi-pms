@@ -1,6 +1,6 @@
 
 import type { Room, Booking } from '@/types';
-import { addDays, subDays } from 'date-fns';
+import { addDays, subDays, parseISO } from 'date-fns';
 
 export const rooms: Room[] = [
   {
@@ -8,7 +8,7 @@ export const rooms: Room[] = [
     name: 'Deluxe King Suite',
     description: 'Spacious suite with a king-size bed and city views.',
     longDescription: 'Indulge in our Deluxe King Suite, offering unparalleled comfort and breathtaking city views. This spacious suite features a plush king-size bed, a separate living area, and a modern bathroom with premium toiletries. Perfect for a luxurious getaway or a productive business trip.',
-    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400.png', 'https://placehold.co/600x400.png'],
+    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400/AAB8C2/FFFFFF.png', 'https://placehold.co/600x400/CCD1D9/FFFFFF.png'],
     pricePerNight: 250,
     beds: '1 King Bed',
     capacity: 2,
@@ -20,7 +20,7 @@ export const rooms: Room[] = [
     name: 'Family Connection Room',
     description: 'Two connecting rooms ideal for families or groups.',
     longDescription: 'Our Family Connection Room provides the perfect space for families or small groups. It consists of two interconnecting rooms, one with a queen bed and another with twin beds, ensuring privacy and comfort for everyone. Enjoy ample space, multiple TVs, and thoughtful amenities designed for a memorable family stay.',
-    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400.png'],
+    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400/AAB8C2/FFFFFF.png'],
     pricePerNight: 320,
     beds: '1 Queen Bed, 2 Twin Beds',
     capacity: 4,
@@ -44,7 +44,7 @@ export const rooms: Room[] = [
     name: 'Executive Studio',
     description: 'Modern studio with enhanced amenities for business travelers.',
     longDescription: 'Designed for the discerning business traveler, our Executive Studio combines style and functionality. It features a comfortable bed, a dedicated workspace with an ergonomic chair, high-speed internet, and access to exclusive executive lounge benefits (subject to availability). Enjoy a productive and relaxing stay with premium coffee and tea facilities.',
-    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400.png'],
+    photos: ['https://placehold.co/800x600.png', 'https://placehold.co/600x400/AAB8C2/FFFFFF.png'],
     pricePerNight: 200,
     beds: '1 Queen Bed or 2 Twin Beds',
     capacity: 2,
@@ -54,7 +54,8 @@ export const rooms: Room[] = [
 ];
 
 const today = new Date();
-export const bookings: Booking[] = [
+// Ensure existing bookings use Date objects or are parsed correctly if they were strings
+export let bookings: Booking[] = [
   {
     id: 'booking1',
     roomId: 'deluxe-king',
@@ -97,4 +98,31 @@ export const bookings: Booking[] = [
     endDate: addDays(today, 3),
     guestName: 'Fiona Gallagher',
   },
-];
+].map(booking => ({
+    ...booking,
+    startDate: typeof booking.startDate === 'string' ? parseISO(booking.startDate) : booking.startDate,
+    endDate: typeof booking.endDate === 'string' ? parseISO(booking.endDate) : booking.endDate,
+}));
+
+
+// Function to add a new booking
+// Expects string dates for easier passing from forms/server actions
+export function addBooking(newBookingData: { 
+  roomId: string; 
+  startDate: string; 
+  endDate: string; 
+  guestName: string;
+  // Add other fields like email if your form collects them
+  guestEmail?: string; 
+}): Booking {
+  const newBooking: Booking = {
+    ...newBookingData,
+    id: `booking${bookings.length + 1}_${Date.now()}`, // Simple unique ID
+    startDate: parseISO(newBookingData.startDate), // Convert string to Date
+    endDate: parseISO(newBookingData.endDate),     // Convert string to Date
+  };
+  bookings.push(newBooking);
+  // console.log('Booking added:', newBooking); // Good for server-side logging
+  // console.log('All bookings now:', bookings.length);
+  return newBooking;
+}

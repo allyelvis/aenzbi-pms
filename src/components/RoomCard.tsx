@@ -5,12 +5,19 @@ import type { Room } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BedDouble, Users, DollarSign, ArrowRight } from 'lucide-react';
+import type { DateRange } from 'react-day-picker';
 
 interface RoomCardProps {
   room: Room;
+  selectedDateRange?: DateRange;
 }
 
-export default function RoomCard({ room }: RoomCardProps) {
+export default function RoomCard({ room, selectedDateRange }: RoomCardProps) {
+  let roomDetailUrl = `/rooms/${room.id}`;
+  if (selectedDateRange?.from && selectedDateRange?.to) {
+    roomDetailUrl += `?from=${selectedDateRange.from.toISOString()}&to=${selectedDateRange.to.toISOString()}`;
+  }
+
   return (
     <Card className="flex flex-col overflow-hidden h-full transition-all duration-300 hover:shadow-xl">
       <CardHeader className="p-0">
@@ -44,7 +51,7 @@ export default function RoomCard({ room }: RoomCardProps) {
       </CardContent>
       <CardFooter className="p-6 pt-0">
         <Button variant="outline" className="w-full group" asChild>
-          <Link href={`/rooms/${room.id}`}>
+          <Link href={roomDetailUrl}>
             View Details <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </Button>

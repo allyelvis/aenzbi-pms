@@ -8,7 +8,7 @@ import type { Room } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { BedDouble, Users, DollarSign, CheckCircle, Maximize2, LayoutGrid } from 'lucide-react';
+import { BedDouble, Users, DollarSign, CheckCircle, Maximize2, CalendarCheck2, Home } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,6 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { format } from 'date-fns';
 
 
 async function getRoomById(id: string): Promise<Room | undefined> {
@@ -25,6 +26,7 @@ async function getRoomById(id: string): Promise<Room | undefined> {
 
 type Props = {
   params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -42,12 +44,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function RoomDetailPage({ params }: Props) {
+export default async function RoomDetailPage({ params, searchParams }: Props) {
   const room = await getRoomById(params.id);
 
   if (!room) {
     notFound();
   }
+
+  const fromDateStr = typeof searchParams?.from === 'string' ? searchParams.from : undefined;
+  const toDateStr = typeof searchParams?.to === 'string' ? searchParams.to : undefined;
+
+  let bookingLink = "/";
+  let buttonText = "Check Availability on Homepage";
+  let buttonIcon = <Home className="mr-2 h-5 w-5" />;
+  let dateDisplay: React.ReactNode = null;
+
+  if (fromDateStr && toDateStr) {
+    try {
+      const fromDate = new Date(fromDateStr);
+      const toDate = new Date(toDateStr);
+      bookingLink = `/booking/${room.id}?from=${fromDateStr}&to=${toDateStr}`;
+      buttonText = "Proceed to Booking";
+      buttonIcon = <CalendarCheck2 className="mr-2 h-5 w-5" />;
+      dateDisplay = (
+        <p className="text-sm text-accent text-center mb-3">
+          Selected Dates: {format(fromDate, "LLL dd, yyyy")} - {format(toDate, "LLL dd, yyyy")}
+        </p>
+      );
+    } catch (error) {
+      // Invalid date format, revert to default button
+      console.warn("Invalid date format in searchParams:", error);
+    }
+  }
+
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -72,7 +101,6 @@ export default async function RoomDetailPage({ params }: Props) {
         <p className="text-lg text-muted-foreground">{room.description}</p>
       </header>
 
-      {/* Image Gallery */}
       <section className="space-y-4">
         {room.photos.length > 0 && (
           <div className="relative w-full h-[300px] md:h-[500px] rounded-lg overflow-hidden shadow-lg">
@@ -106,7 +134,6 @@ export default async function RoomDetailPage({ params }: Props) {
       <Separator />
 
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Left Column: Description & Amenities */}
         <div className="md:col-span-2 space-y-6">
           <section>
             <h2 className="text-2xl font-headline font-semibold mb-3">Room Details</h2>
@@ -128,7 +155,6 @@ export default async function RoomDetailPage({ params }: Props) {
           </section>
         </div>
 
-        {/* Right Column: Key Info & Booking */}
         <aside className="md:col-span-1 space-y-6">
           <div className="p-6 border rounded-lg shadow-lg bg-card sticky top-24">
             <h2 className="text-2xl font-headline font-semibold mb-6 text-center">Key Information</h2>
@@ -156,23 +182,21 @@ export default async function RoomDetailPage({ params }: Props) {
                 <p className="text-foreground">Size: {room.size}</p>
               </div>
             </div>
+            {dateDisplay}
             <Button size="lg" className="w-full font-semibold text-base py-3" asChild>
-              <Link href="/">
-                 Check Availability & Book
+              <Link href={bookingLink}>
+                {buttonIcon}
+                {buttonText}
               </Link>
             </Button>
-            <p className="text-xs text-muted-foreground mt-3 text-center">
-              Return to homepage to select dates for this room.
-            </p>
+            {!(fromDateStr && toDateStr) && (
+               <p className="text-xs text-muted-foreground mt-3 text-center">
+                Select dates on the homepage to book this room.
+              </p>
+            )}
           </div>
         </aside>
       </div>
     </div>
   );
 }
-
-// Need to add Breadcrumb components if not already present from shadcn
-// For now, assuming they exist or will be added. If not, this section might error.
-// If Breadcrumb is not standard in shadcn/ui, I might need to create a simple one or omit it.
-// Checking components.json, Breadcrumb is not listed. I will add a placeholder Breadcrumb component for now.
-// Adding a new Breadcrumb component to components/ui

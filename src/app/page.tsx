@@ -1,15 +1,15 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import type { DateRange } from 'react-day-picker';
-import { isWithinInterval, parseISO } from 'date-fns'; // Import parseISO if dates are strings
+import { parseISO } from 'date-fns'; 
 
 import DateRangeSearch from '@/components/DateRangeSearch';
 import RoomCard from '@/components/RoomCard';
 import type { Room, Booking } from '@/types';
-import { rooms as allRoomsData, bookings as allBookingsData } from '@/lib/data'; // Static import
+import { rooms as allRoomsData, bookings as allBookingsData } from '@/lib/data'; 
 
-// Helper to parse booking dates if they are not already Date objects
 const parseBookings = (bookings: Booking[]): Booking[] => 
   bookings.map(booking => ({
     ...booking,
@@ -21,7 +21,6 @@ const parseBookings = (bookings: Booking[]): Booking[] =>
 export default function HomePage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
-  // Memoize parsed data to avoid reprocessing on every render
   const allRooms = useMemo(() => allRoomsData, []);
   const allBookings = useMemo(() => parseBookings(allBookingsData), []);
 
@@ -35,14 +34,12 @@ export default function HomePage() {
       const availableRooms = allRooms.filter(room => {
         const roomBookings = allBookings.filter(booking => booking.roomId === room.id);
         const isRoomBookedForRange = roomBookings.some(booking => {
-          // Check for overlap: booking.startDate < checkOut && booking.endDate > checkIn
           return booking.startDate < checkOut && booking.endDate > checkIn;
         });
         return !isRoomBookedForRange;
       });
       setFilteredRooms(availableRooms);
     } else {
-      // If no date range or incomplete range, show all rooms
       setFilteredRooms(allRooms);
     }
   }, [dateRange, allRooms, allBookings]);
@@ -70,7 +67,7 @@ export default function HomePage() {
         {filteredRooms.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map(room => (
-              <RoomCard key={room.id} room={room} />
+              <RoomCard key={room.id} room={room} selectedDateRange={dateRange} />
             ))}
           </div>
         ) : (
