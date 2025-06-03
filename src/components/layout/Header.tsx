@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { Building2, BedDouble, CalendarDays, UserCog } from 'lucide-react'; // Added icons
+import { Building2, BedDouble, CalendarDays, UserCog, Utensils } from 'lucide-react'; // Added Utensils icon
 import { Button } from '@/components/ui/button';
 
 export default function Header() {
@@ -18,6 +18,11 @@ export default function Header() {
           <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3">
             <Link href="/availability" className="flex items-center gap-1">
               <CalendarDays className="w-4 h-4 sm:hidden md:inline-block" /> Availability
+            </Link>
+          </Button>
+           <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3">
+            <Link href="/food-and-beverage" className="flex items-center gap-1">
+              <Utensils className="w-4 h-4 sm:hidden md:inline-block" /> F&B Outlets
             </Link>
           </Button>
           <Button variant="ghost" asChild className="hover:bg-white/10 text-xs sm:text-sm px-2 sm:px-3">

@@ -1,5 +1,5 @@
 
-import type { Room, Booking, RoomStatus } from '@/types';
+import type { Room, Booking, RoomStatus, FoodBeverageOutlet } from '@/types';
 import { addDays, subDays, parseISO } from 'date-fns';
 
 export let rooms: Room[] = [
@@ -150,3 +150,50 @@ export function updateRoomStatus(roomId: string, newStatus: RoomStatus): boolean
   rooms[roomIndex].status = newStatus;
   return true;
 }
+
+export const foodBeverageOutlets: FoodBeverageOutlet[] = [
+  {
+    id: 'the-grand-dining',
+    name: 'The Grand Dining Room',
+    description: 'Experience exquisite fine dining with a menu curated by our award-winning chef. Perfect for special occasions and elegant evenings.',
+    cuisineType: 'International Fine Dining',
+    operatingHours: 'Daily: 6:00 PM - 10:00 PM (Dinner)',
+    imageUrl: 'https://placehold.co/600x400.png',
+    menuHighlights: ['Pan-Seared Scallops', 'Wagyu Beef Tenderloin', 'Chocolate Lava Cake'],
+    dressCode: 'Smart Elegant',
+    location: 'Lobby Level, Main Wing',
+  },
+  {
+    id: 'rooftop-lounge',
+    name: 'Azure Rooftop Lounge',
+    description: 'Enjoy panoramic city views with signature cocktails and gourmet tapas. Live DJ sets on weekends.',
+    cuisineType: 'Cocktails & Tapas',
+    operatingHours: 'Mon-Thu: 5:00 PM - 12:00 AM, Fri-Sun: 3:00 PM - 2:00 AM',
+    imageUrl: 'https://placehold.co/600x400.png',
+    menuHighlights: ['Spicy Tuna Crispy Rice', 'Artisanal Cheese Platter', 'Aenzbi Signature Martini'],
+    dressCode: 'Chic Casual',
+    location: 'Rooftop, 30th Floor',
+  },
+  {
+    id: 'garden-cafe',
+    name: 'The Garden Café',
+    description: 'A relaxed, all-day dining venue offering international buffets and à la carte options in a lush garden setting.',
+    cuisineType: 'All-Day Dining (Buffet & À la carte)',
+    operatingHours: 'Daily: 6:30 AM - 11:00 PM',
+    imageUrl: 'https://placehold.co/600x400.png',
+    menuHighlights: ['Breakfast Buffet Extravaganza', 'Gourmet Burgers', 'Freshly Baked Pastries'],
+    dressCode: 'Casual',
+    location: 'Ground Floor, overlooking the gardens',
+  },
+  {
+    id: 'poolside-grill',
+    name: 'Oasis Poolside Grill',
+    description: 'Light snacks, refreshing beverages, and grilled specialties served by the poolside. Perfect for a sunny afternoon.',
+    cuisineType: 'Grill & Light Bites',
+    operatingHours: 'Daily: 10:00 AM - 7:00 PM (Weather permitting)',
+    imageUrl: 'https://placehold.co/600x400.png',
+    menuHighlights: ['Grilled Salmon Salad', 'Club Sandwich', 'Fresh Fruit Smoothies'],
+    dressCode: 'Swimwear/Casual',
+    location: 'Pool Deck',
+  }
+];

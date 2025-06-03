@@ -36,3 +36,16 @@ export type Booking = {
   guestName: string;
   guestEmail: string;
 };
+
+export type FoodBeverageOutlet = {
+  id: string;
+  name: string;
+  description: string;
+  cuisineType: string;
+  operatingHours: string;
+  imageUrl: string;
+  menuHighlights?: string[];
+  dressCode?: string;
+  location: string;
+};
+
